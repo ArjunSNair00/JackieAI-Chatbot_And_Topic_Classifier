@@ -2,15 +2,16 @@ import uvicorn
 import joblib
 import numpy as np
 import traceback
-from fastapi import FastAPI, Request, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 # Setup Chat Client
 API_KEY = os.getenv("OPENAI_API_KEY")
@@ -33,7 +34,7 @@ app.add_middleware(
 
 # Load the model directly wrapped in a try/except so the server doesn't blindly fail
 try:
-    model = joblib.load("topic_classifier.pkl")
+    model = joblib.load(BASE_DIR / "topic_classifier.pkl")
     print("✅ Model loaded successfully from topic_classifier.pkl.")
 except Exception as e:
     print(f"❌ Critical Error loading model: {e}")
@@ -49,14 +50,10 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
 
-# Serve the HTML frontend
-@app.get("/", response_class=HTMLResponse)
+# Basic service status endpoint
+@app.get("/")
 async def read_index():
-    try:
-        with open("index.html", "r", encoding="utf-8") as f:
-            return f.read()
-    except Exception as e:
-        return f"<h1>Error loading index.html:</h1> <p>{str(e)}</p>"
+    return {"status": "ok", "service": "topic-classifier-api"}
 
 
 # Shared prediction logic
@@ -113,5 +110,4 @@ async def chat_post(req: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

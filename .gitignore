@@ -6,4 +6,5 @@ dist/
 build/
 app.spec
 node_modules/
+.expo/
 .DS_Store
