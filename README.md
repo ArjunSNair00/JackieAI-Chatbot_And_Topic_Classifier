@@ -10,9 +10,11 @@
 **Jackie-AI** is an AI Chatbot & Classification platform that combines high-performance machine learning with a premium, "mass" themed user experience. Inspired by the iconic Malayalam cinema character Sagar Alias Jackie, this application allows you to swap between serious professional assistance and the legendary underworld don persona.
 
 Web:
+
 https://jackie-ai.vercel.app
 
 Apk:
+
 https://expo.dev/artifacts/eas/gsNXtmwpJShBz1hP6sYpDC.apk
 
 ---
