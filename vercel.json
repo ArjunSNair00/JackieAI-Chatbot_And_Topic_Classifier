@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://topic-classifier-api.onrender.com/$1"
+    }
+  ]
+}

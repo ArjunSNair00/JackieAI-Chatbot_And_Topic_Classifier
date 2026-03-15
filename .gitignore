@@ -1,0 +1,10 @@
+.env
+venv/
+__pycache__/
+*.csv
+*.pkl
+dist/
+build/
+app.spec
+node_modules/
+.DS_Store

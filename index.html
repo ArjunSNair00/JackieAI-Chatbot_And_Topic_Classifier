@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Topic Classifier AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0D0D0D;
+      color: #E5E5E5;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2D2D2D;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3D3D3D;
+    }
+
+    .glass {
+      background: rgba(23, 23, 23, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .sidebar-gradient {
+      background: linear-gradient(180deg, #171717 0%, #0D0D0D 100%);
+    }
+
+    .msg-user { border-radius: 1.5rem 1.5rem 0.2rem 1.5rem; }
+    .msg-bot { border-radius: 1.5rem 1.5rem 1.5rem 0.2rem; }
+  </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+  
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-[280px] h-full sidebar-gradient border-r border-white/5 flex flex-col transition-all duration-300 transform md:translate-x-0 -translate-x-full fixed md:relative z-50">
+    <div class="p-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <i data-lucide="brain-circuit" class="w-5 h-5 text-white"></i>
+        </div>
+        <span class="font-bold text-lg tracking-tight">Classifier<span class="text-blue-500">AI</span></span>
+      </div>
+      <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-white/5 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div class="px-4 py-2">
+      <button onclick="createNewChat()" class="flex items-center gap-3 w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200 text-sm font-semibold group">
+        <i data-lucide="plus" class="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform"></i>
+        New Analysis
+      </button>
+    </div>
+
+    <!-- History -->
+    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-2 mt-2" id="sidebar-history">
+      <!-- Session Items -->
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-white/5 space-y-4">
+      <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-sm font-bold shadow-lg">U</div>
+        <div class="flex-1 overflow-hidden">
+          <p class="text-sm font-semibold truncate">User Profile</p>
+          <p class="text-xs text-gray-500 truncate">Settings & Preferences</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay for mobile sidebar -->
+  <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
+  <!-- Main View -->
+  <main class="flex-1 flex flex-col h-full relative">
+    
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-4 md:px-8 border-b border-white/5 glass sticky top-0 z-30">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-white/5 rounded-lg">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <span class="text-sm font-medium text-gray-400" id="current-title">New Analysis</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2">
+          <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Model Online</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Chat Canvas -->
+    <div id="chat-container" class="flex-1 overflow-y-auto w-full">
+      <div class="max-w-4xl mx-auto py-10 px-4 space-y-8 pb-32">
+        <!-- Initial Welcome State -->
+        <div id="empty-state" class="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-fadeIn">
+          <div class="relative">
+            <div class="absolute inset-0 blur-3xl bg-blue-600/20 rounded-full"></div>
+            <div class="relative w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl">
+              <i data-lucide="zap" class="w-10 h-10 text-white"></i>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <h1 class="text-4xl font-extrabold tracking-tight text-white lg:text-5xl">Analyze Anything.</h1>
+            <p class="text-gray-400 max-w-lg mx-auto text-lg leading-relaxed">
+              Paste your text below. Our neural classifier will categorize it into business, tech, or science topics with real-time confidence mapping.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl w-full">
+            <button onclick="setInput('How to train a transformer model for NLP tasks?')" class="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-white/10 transition-all text-left group">
+              <p class="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">Technical Question</p>
+              <p class="text-xs text-gray-500 mt-1">"How to train a transformer model..."</p>
+            </button>
+            <button onclick="setInput('The economy is facing significant inflation pressure this quarter.')" class="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-white/10 transition-all text-left group">
+              <p class="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">Economic Analysis</p>
+              <p class="text-xs text-gray-500 mt-1">"The economy is facing significant..."</p>
+            </button>
+          </div>
+        </div>
+        <!-- Messages will be injected here -->
+        <div id="chat" class="space-y-8"></div>
+      </div>
+    </div>
+
+    <!-- Input Footer -->
+    <div class="p-6 md:p-8 pt-0">
+      <div class="max-w-4xl mx-auto">
+        <div class="glass border border-white/10 rounded-3xl p-2 shadow-2xl relative group focus-within:border-blue-500/50 transition-all">
+          <div class="flex items-end">
+            <textarea
+              id="input"
+              rows="1"
+              class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-500 px-4 py-4 resize-none max-h-60"
+              placeholder="Classification query..."
+            ></textarea>
+            <div class="pb-2 pr-2">
+              <button id="send-btn" onclick="send()" class="w-10 h-10 bg-blue-600 hover:bg-blue-50 rounded-2xl text-white hover:text-blue-600 flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale">
+                <i data-lucide="arrow-up" class="w-6 h-6"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-[0.2em] font-semibold">Trained on specialized Topic Datasets • Version 2.0</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const chatDiv = document.getElementById("chat");
+    const chatContainer = document.getElementById("chat-container");
+    const sidebarHistoryDiv = document.getElementById("sidebar-history");
+    const inputField = document.getElementById("input");
+    const sendBtn = document.getElementById("send-btn");
+    const currentTitleEl = document.getElementById("current-title");
+
+    let sessions = JSON.parse(localStorage.getItem('classifier_sessions')) || [];
+    let activeSessionId = null;
+
+    // Use relative path exclusively so it relies on the served route.
+    const apiUrl = "/predict";
+
+    // Dynamic styles
+    function getConfidenceUI(conf) {
+      if (conf === "N/A" || conf === null) return { text: "N/A", class: "bg-gray-800 text-gray-400" };
+      const percent = Math.round(conf * 100);
+      if (conf >= 0.85) return { text: `${percent}% Match`, class: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" };
+      if (conf >= 0.6) return { text: `${percent}% Possible`, class: "bg-amber-500/10 text-amber-500 border-amber-500/20" };
+      return { text: `${percent}% Low Conf`, class: "bg-rose-500/10 text-rose-500 border-rose-500/20" };
+    }
+
+    inputField.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        sendBtn.disabled = !this.value.trim();
+    });
+    
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+        }
+    });
+
+    function setInput(text) {
+      inputField.value = text;
+      inputField.style.height = 'auto';
+      inputField.style.height = (inputField.scrollHeight) + 'px';
+      sendBtn.disabled = false;
+      inputField.focus();
+    }
+
+    function saveSessions() {
+      localStorage.setItem('classifier_sessions', JSON.stringify(sessions));
+    }
+
+    function createNewChat() {
+      activeSessionId = Date.now().toString();
+      sessions.unshift({
+          id: activeSessionId,
+          title: "New Analysis",
+          messages: []
+      });
+      saveSessions();
+      renderSidebar();
+      renderChat();
+      if (window.innerWidth < 768) toggleSidebar();
+      inputField.focus();
+    }
+
+    function loadSession(id) {
+      activeSessionId = id.toString();
+      renderSidebar();
+      renderChat();
+      if (window.innerWidth < 768) toggleSidebar();
+    }
+
+    function deleteSession(e, id) {
+      e.stopPropagation();
+      sessions = sessions.filter(s => s.id !== id.toString());
+      saveSessions();
+      if (sessions.length > 0) loadSession(sessions[0].id);
+      else createNewChat();
+    }
+
+    function renderSidebar() {
+      sidebarHistoryDiv.innerHTML = sessions.map(session => {
+        const isActive = session.id === activeSessionId;
+        return `
+          <div onclick="loadSession('${session.id}')" 
+               class="group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${isActive ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20' : 'hover:bg-white/5 text-gray-400 hover:text-gray-200 border border-transparent'}">
+            <i data-lucide="message-square" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="truncate text-xs font-semibold flex-1">${session.title}</span>
+            <button onclick="deleteSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition-opacity">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function renderChat() {
+      const session = sessions.find(s => s.id === activeSessionId);
+      currentTitleEl.innerText = session ? session.title : "Classifier";
+
+      if (!session || session.messages.length === 0) {
+          document.getElementById('empty-state').style.display = 'flex';
+          chatDiv.innerHTML = '';
+          return;
+      }
+      
+      document.getElementById('empty-state').style.display = 'none';
+      
+      chatDiv.innerHTML = session.messages.map((m, idx) => {
+        const isUser = m.role === "user";
+        if (isUser) {
+          return `
+            <div class="flex flex-col items-end gap-2 animate-fadeIn">
+              <div class="bg-blue-600 text-white px-5 py-4 msg-user max-w-[85%] shadow-lg shadow-blue-500/10">
+                <p class="text-sm leading-relaxed">${m.text}</p>
+              </div>
+              <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest mr-2">Sent By You</span>
+            </div>
+          `;
+        } else {
+          const ui = getConfidenceUI(m.conf);
+          return `
+            <div class="flex flex-col items-start gap-3 animate-fadeIn">
+              <div class="bg-white/5 border border-white/5 p-6 msg-bot max-w-[90%] md:max-w-[80%] relative group shadow-2xl overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <i data-lucide="bot" class="w-4 h-4 text-blue-400"></i>
+                  </div>
+                  <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Neural Analysis Complete</span>
+                </div>
+                <div class="space-y-4">
+                  <div class="flex items-baseline gap-2 flex-wrap">
+                    <span class="text-sm text-gray-400">Topic Identified:</span>
+                    <span class="text-2xl font-bold text-white tracking-tight">${m.text}</span>
+                  </div>
+                  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${ui.class}">
+                    ${ui.text}
+                  </div>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest ml-2">Generated by Classifier v2.0</span>
+            </div>
+          `;
+        }
+      }).join('');
+      
+      lucide.createIcons();
+      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+    }
+
+    async function send() {
+      const val = inputField.value.trim();
+      if (!val) return;
+      
+      const session = sessions.find(s => s.id === activeSessionId);
+      if (!session) return;
+
+      if (session.messages.length === 0) {
+          session.title = val.substring(0, 35) + (val.length > 35 ? '...' : '');
+      }
+
+      session.messages.push({ role: "user", text: val });
+      saveSessions();
+      renderSidebar();
+      renderChat();
+      
+      inputField.value = "";
+      inputField.style.height = 'auto';
+      sendBtn.disabled = true;
+
+      // Add thinking...
+      session.messages.push({ role: "bot", text: "Analyzing semantic patterns...", conf: null });
+      renderChat();
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: val }),
+        });
+        const data = await res.json();
+        
+        session.messages.pop(); 
+        session.messages.push({
+          role: "bot",
+          text: data.topic,
+          conf: data.confidence,
+        });
+        
+        saveSessions();
+        renderChat();
+      } catch (err) {
+        session.messages.pop();
+        session.messages.push({ role: "bot", text: "Target server unreachable. Ensure python backend is running.", conf: null });
+        saveSessions();
+        renderChat();
+      }
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (sb.classList.contains('-translate-x-full')) {
+        sb.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+      } else {
+        sb.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    // Init
+    if (sessions.length > 0) loadSession(sessions[0].id);
+    else createNewChat();
+    
+    sendBtn.disabled = true;
+  </script>
+</body>
+</html>
