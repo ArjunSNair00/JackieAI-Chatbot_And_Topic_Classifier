@@ -55,6 +55,20 @@
     .msg-user { border-radius: 1.5rem 1.5rem 0.2rem 1.5rem; }
     .msg-bot { border-radius: 1.5rem 1.5rem 1.5rem 0.2rem; }
 
+    /* Drag Overlay */
+    #global-drag-overlay {
+      background: rgba(59, 130, 246, 0.1);
+      border: 4px dashed rgba(59, 130, 246, 0.4);
+      z-index: 100;
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+      display: none;
+    }
+    #global-drag-overlay.active {
+      display: flex;
+      pointer-events: all;
+    }
+
     /* Wavy Animation */
     @keyframes wavy {
       0%, 40%, 100% { transform: translateY(0); }
@@ -123,6 +137,15 @@
   </style>
 </head>
 <body class="h-screen flex overflow-hidden">
+  
+  <!-- Global Drag Overlay -->
+  <div id="global-drag-overlay" class="fixed inset-0 flex flex-col items-center justify-center animate-fadeIn">
+    <div class="w-32 h-32 rounded-3xl bg-blue-600 flex items-center justify-center shadow-2xl mb-6">
+      <i data-lucide="file-up" class="w-16 h-16 text-white"></i>
+    </div>
+    <h2 class="text-3xl font-bold text-white tracking-tight">Drop your PDF anywhere</h2>
+    <p class="text-blue-400 font-semibold mt-2">IntelliChat will analyze it instantly</p>
+  </div>
   
   <!-- Sidebar -->
   <aside id="sidebar" class="w-[280px] h-full sidebar-gradient border-r border-white/5 flex flex-col transition-all duration-300 transform md:translate-x-0 -translate-x-full fixed md:relative z-50">
@@ -682,17 +705,21 @@
     }
 
     // Drag and Drop
-    const dropZone = document.getElementById('drop-zone');
-    dropZone.addEventListener('dragover', (e) => {
+    window.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropZone.classList.add('border-blue-500');
+      document.getElementById('global-drag-overlay').classList.add('active');
     });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('border-blue-500');
+
+    window.addEventListener('dragleave', (e) => {
+      // Only hide if we actually leave the window
+      if (e.relatedTarget === null) {
+        document.getElementById('global-drag-overlay').classList.remove('active');
+      }
     });
-    dropZone.addEventListener('drop', (e) => {
+
+    window.addEventListener('drop', (e) => {
       e.preventDefault();
-      dropZone.classList.remove('border-blue-500');
+      document.getElementById('global-drag-overlay').classList.remove('active');
       if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
 
