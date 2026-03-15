@@ -239,6 +239,18 @@
 
     <!-- Footer -->
     <div class="p-4 border-t border-black space-y-4">
+      <!-- Jackie Mode Toggle -->
+      <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
+          <span class="text-xs font-bold text-white uppercase tracking-wider mass-font">Jackie Mode</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="jackie-mode-toggle" class="sr-only peer" checked onchange="toggleJackieMode(this.checked)">
+          <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"></div>
+        </label>
+      </div>
+
       <div class="flex items-center gap-3 p-2 hover:bg-yellow-500/10 rounded-xl transition-all cursor-pointer group border-2 border-transparent hover:border-black">
         <div class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black shadow-lg cartoon-border group-hover:rotate-6 transition-transform">
           <i data-lucide="sunglasses" class="w-6 h-6"></i>
@@ -375,6 +387,13 @@
     let activeSessionId = null;
     let attachedFileText = "";
     let currentAbortController = null;
+    let isJackieMode = localStorage.getItem('jackie_mode') !== 'false';
+    document.getElementById('jackie-mode-toggle').checked = isJackieMode;
+
+    function toggleJackieMode(enabled) {
+      isJackieMode = enabled;
+      localStorage.setItem('jackie_mode', enabled);
+    }
 
     // Use relative path exclusively so it relies on the served route.
     const apiUrl = "/predict";
@@ -664,7 +683,10 @@
             fullText = `[Attached Document Content]:\n${attachedFileText}\n\n[User Instruction]:\n${val}`;
           }
 
-          const systemPrompt = `You are Sagar Alias Jackie, the iconic Malayalam movie character. You are a mass underworld don with style, confidence, and a unique way of speaking. Use movie quotes like "Money is always an issue", "Nee Dubai kanditundo?", "Dubai!", "Jackie Machaan!", and have a "mass" attitude. Your tone is funny, sarcastic, and slightly dangerous but helpful. Respond in English with a touch of Kerala underworld vibe. Never break character. Always address the user as a 'Customer'.`;
+          const jackiePrompt = `You are Sagar Alias Jackie, the iconic Malayalam movie character. You are a mass underworld don with style, confidence, and a unique way of speaking. Use movie quotes like "Money is always an issue", "Nee Dubai kanditundo?", "Dubai!", "Jackie Machaan!", and have a "mass" attitude. Your tone is funny, sarcastic, and slightly dangerous but helpful. Respond in English with a touch of Kerala underworld vibe. Never break character. Always address the user as a 'Customer'.`;
+          const normalPrompt = `You are a professional, helpful, and concise AI assistant. Provide accurate, serious, and quick responses to the user's queries. Maintain a polite and professional tone at all times.`;
+          
+          const systemPrompt = isJackieMode ? jackiePrompt : normalPrompt;
           
           const historyToSend = [
             { role: 'system', content: systemPrompt },
