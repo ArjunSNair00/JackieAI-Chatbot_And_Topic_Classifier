@@ -420,6 +420,8 @@
     function deleteSession(e, id) {
       e.stopPropagation();
       sessions = sessions.filter(s => s.id !== id.toString());
+      if (currentMode === 'classifier') classifierSessions = sessions;
+      else chatbotSessions = sessions;
       saveSessions();
       if (sessions.length > 0) loadSession(sessions[0].id);
       else createNewChat();
