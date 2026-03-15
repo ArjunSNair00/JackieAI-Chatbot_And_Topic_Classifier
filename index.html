@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -178,8 +179,8 @@
       
       <!-- Mode Toggle -->
       <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 mx-2 shadow-inner">
-        <button id="mode-classifier-btn" onclick="setMode('classifier')" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 shadow-md text-white transition-all">Classifier</button>
-        <button id="mode-chatbot-btn" onclick="setMode('chatbot')" class="px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition-all">Chatbot</button>
+        <button id="mode-classifier-btn" onclick="setMode('classifier')" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition-all">Classifier</button>
+        <button id="mode-chatbot-btn" onclick="setMode('chatbot')" class="px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 shadow-md text-white transition-all">IntelliChat</button>
       </div>
 
       <div class="flex items-center gap-2">
@@ -202,9 +203,9 @@
             </div>
           </div>
           <div class="space-y-3">
-            <h1 id="empty-title" class="text-4xl font-extrabold tracking-tight text-white lg:text-5xl">Analyze Anything.</h1>
+            <h1 id="empty-title" class="text-4xl font-extrabold tracking-tight text-white lg:text-5xl">Chat with IntelliChat.</h1>
             <p id="empty-desc" class="text-gray-400 max-w-lg mx-auto text-lg leading-relaxed">
-              Paste your text below. Our neural classifier will categorize it into business, tech, or science topics with real-time confidence mapping.
+              Have a conversation with our most advanced neural engine. Upload documents, ask questions, and build projects.
             </p>
           </div>
           <div id="empty-hints" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl w-full">
@@ -219,15 +220,38 @@
     <!-- Input Footer -->
     <div class="p-6 md:p-8 pt-0">
       <div class="max-w-4xl mx-auto">
-        <div class="glass border border-white/10 rounded-3xl p-2 shadow-2xl relative group focus-within:border-blue-500/50 transition-all">
+        <div id="drop-zone" class="glass border border-white/10 rounded-3xl p-2 shadow-2xl relative group focus-within:border-blue-500/50 transition-all">
+          <!-- Attachment Preview -->
+          <div id="file-preview" class="hidden px-4 py-2 border-b border-white/5 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs text-blue-400">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              <span id="file-name" class="font-semibold truncate max-w-[200px]">document.pdf</span>
+            </div>
+            <button onclick="removeFile()" class="p-1 hover:text-rose-500">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          
           <div class="flex items-end">
+            <!-- Attachment Button -->
+            <div class="pb-2 pl-2">
+              <input type="file" id="file-input" class="hidden" accept=".pdf" onchange="handleFile(this.files[0])">
+              <button onclick="document.getElementById('file-input').click()" class="w-10 h-10 hover:bg-white/10 rounded-2xl text-gray-400 hover:text-white flex items-center justify-center transition-all">
+                <i data-lucide="paperclip" class="w-5 h-5"></i>
+              </button>
+            </div>
+            
             <textarea
               id="input"
               rows="1"
               class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-500 px-4 py-4 resize-none max-h-60"
-              placeholder="Classification query..."
+              placeholder="Type your message..."
             ></textarea>
-            <div class="pb-2 pr-2">
+            
+            <div class="pb-2 pr-2 flex gap-2">
+              <button id="stop-btn" onclick="stopExecution()" class="hidden w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 rounded-2xl text-rose-500 flex items-center justify-center transition-all">
+                <i data-lucide="square" class="w-5 h-5"></i>
+              </button>
               <button id="send-btn" onclick="send()" class="w-10 h-10 bg-blue-600 hover:bg-blue-50 rounded-2xl text-white hover:text-blue-600 flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale">
                 <i data-lucide="arrow-up" class="w-6 h-6"></i>
               </button>
@@ -247,13 +271,19 @@
     const sidebarHistoryDiv = document.getElementById("sidebar-history");
     const inputField = document.getElementById("input");
     const sendBtn = document.getElementById("send-btn");
+    const stopBtn = document.getElementById("stop-btn");
     const currentTitleEl = document.getElementById("current-title");
+    const fileInput = document.getElementById("file-input");
+    const filePreview = document.getElementById("file-preview");
+    const fileNameEl = document.getElementById("file-name");
 
-    let currentMode = 'classifier';
+    let currentMode = 'chatbot';
     let classifierSessions = JSON.parse(localStorage.getItem('classifier_sessions')) || [];
     let chatbotSessions = JSON.parse(localStorage.getItem('chatbot_sessions')) || [];
-    let sessions = classifierSessions;
+    let sessions = chatbotSessions;
     let activeSessionId = null;
+    let attachedFileText = "";
+    let currentAbortController = null;
 
     // Use relative path exclusively so it relies on the served route.
     const apiUrl = "/predict";
@@ -305,10 +335,12 @@
       document.getElementById('mode-classifier-btn').className = `px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${mode === 'classifier' ? 'bg-blue-600 shadow-md text-white' : 'text-gray-400 hover:text-white'}`;
       document.getElementById('mode-chatbot-btn').className = `px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${mode === 'chatbot' ? 'bg-purple-600 shadow-md text-white' : 'text-gray-400 hover:text-white'}`;
       
-      document.getElementById('empty-title').innerText = mode === 'classifier' ? 'Analyze Anything.' : 'Chat with Gemma 3.';
+      document.getElementById('empty-title').innerText = mode === 'classifier' ? 'Analyze Anything.' : 'Chat with IntelliChat.';
       document.getElementById('empty-desc').innerText = mode === 'classifier' 
         ? 'Paste your text below. Our neural classifier will categorize it into business, tech, or science topics with real-time confidence mapping.' 
-        : 'Have a conversation with the ultra-smart Gemma 3 4B cloud model integrated via Ollama.';
+        : 'Have a conversation with our most advanced neural engine. Upload documents, ask questions, and build projects.';
+      
+      inputField.placeholder = mode === 'classifier' ? "Classification query..." : "Type your message...";
         
       const hintsContainer = document.getElementById('empty-hints');
       if (mode === 'classifier') {
@@ -418,8 +450,13 @@
                   <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
                     <i data-lucide="bot" class="w-4 h-4 text-blue-400"></i>
                   </div>
-                  <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">${currentMode === 'classifier' ? 'Neural Analysis Complete' : 'Gemma 3:4b'}</span>
+                  <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">${currentMode === 'classifier' ? 'Neural Analysis Complete' : 'IntelliChat Engine'}</span>
                 </div>
+                <!-- Copy Button -->
+                <button onclick="copyToClipboard(this, \`${m.text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="absolute top-4 right-4 p-2 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                </button>
+
                 <div class="space-y-4">
                   ${m.text === "Thinking..." || m.text === "Analyzing semantic patterns..." ? `
                     <div class="flex flex-col gap-4">
@@ -479,12 +516,16 @@
       session.messages.push({ role: "bot", text: currentMode === 'classifier' ? "Analyzing semantic patterns..." : "Thinking...", conf: null });
       renderChat();
 
+      currentAbortController = new AbortController();
+      stopBtn.classList.remove('hidden');
+
       try {
         if (currentMode === 'classifier') {
           const res = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: val }),
+            signal: currentAbortController.signal
           });
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
@@ -499,7 +540,12 @@
             conf: data.confidence !== undefined ? data.confidence : "N/A",
           });
         } else {
-          // Prepare history for Chatbot
+          // Add attachment if any
+          let fullText = val;
+          if (attachedFileText) {
+            fullText = `[Attached Document Content]:\n${attachedFileText}\n\n[User Instruction]:\n${val}`;
+          }
+
           const historyToSend = session.messages.slice(0, -1).map(m => ({
             role: m.role === 'user' ? 'user' : 'assistant', 
             content: m.text
@@ -509,6 +555,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messages: historyToSend }),
+            signal: currentAbortController.signal
           });
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
@@ -522,11 +569,13 @@
             text: data.response || "No response received.",
             conf: null,
           });
+          removeFile(); // Clear file after sending
         }
         
         saveSessions();
         renderChat();
       } catch (err) {
+        if (err.name === 'AbortError') return;
         session.messages.pop();
         session.messages.push({ 
           role: "bot", 
@@ -535,8 +584,77 @@
         });
         saveSessions();
         renderChat();
+      } finally {
+        currentAbortController = null;
+        stopBtn.classList.add('hidden');
       }
     }
+
+    function stopExecution() {
+      if (currentAbortController) {
+        currentAbortController.abort();
+        const session = sessions.find(s => s.id === activeSessionId);
+        if (session) {
+          session.messages.pop();
+          session.messages.push({ role: "bot", text: "Process cancelled by user.", conf: null });
+          saveSessions();
+          renderChat();
+        }
+        stopBtn.classList.add('hidden');
+      }
+    }
+
+    async function handleFile(file) {
+      if (!file || file.type !== "application/pdf") return;
+      fileNameEl.innerText = file.name;
+      filePreview.classList.remove('hidden');
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      let text = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(" ") + "\n";
+      }
+      attachedFileText = text;
+    }
+
+    function removeFile() {
+      attachedFileText = "";
+      fileInput.value = "";
+      filePreview.classList.add('hidden');
+    }
+
+    function copyToClipboard(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const icon = btn.querySelector('i');
+        const originalIcon = icon.getAttribute('data-lucide');
+        icon.setAttribute('data-lucide', 'check');
+        btn.classList.add('text-green-500');
+        lucide.createIcons();
+        setTimeout(() => {
+          icon.setAttribute('data-lucide', originalIcon);
+          btn.classList.remove('text-green-500');
+          lucide.createIcons();
+        }, 2000);
+      });
+    }
+
+    // Drag and Drop
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-blue-500');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-blue-500');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
 
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
@@ -551,7 +669,7 @@
     }
 
     // Init
-    setMode('classifier');
+    setMode('chatbot');
     
     sendBtn.disabled = true;
   </script>
