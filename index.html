@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -525,6 +526,10 @@
                     <i data-lucide="copy" class="w-3.5 h-3.5 group-hover:scale-110 transition-transform"></i>
                     <span>Copy</span>
                   </button>
+                  <button onclick="exportToPDF(${idx}, event)" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider group">
+                    <i data-lucide="file-down" class="w-3.5 h-3.5 group-hover:scale-110 transition-transform"></i>
+                    <span>Export PDF</span>
+                  </button>
                 </div>
                 ` : ''}
               </div>
@@ -681,28 +686,66 @@
         const btn = e.currentTarget;
         const container = btn.parentElement;
         const status = container.querySelector('.copy-status');
-        const icon = btn.querySelector('i');
+        const icon = btn.querySelector('svg'); // Lucide replaces <i> with <svg>
         const span = btn.querySelector('span');
         
         if (!icon) return;
         
-        const originalIcon = icon.getAttribute('data-lucide');
+        const originalLucide = icon.getAttribute('data-lucide') || 'copy';
         const originalText = span.innerText;
         
-        icon.setAttribute('data-lucide', 'check');
+        icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>'; // Checkmark
         span.innerText = "Copied";
         status.classList.remove('opacity-0');
         btn.classList.add('bg-emerald-500/20', 'text-emerald-500');
         
-        lucide.createIcons();
-        
         setTimeout(() => {
-          icon.setAttribute('data-lucide', originalIcon);
+          icon.setAttribute('data-lucide', originalLucide);
           span.innerText = originalText;
           status.classList.add('opacity-0');
           btn.classList.remove('bg-emerald-500/20', 'text-emerald-500');
           lucide.createIcons();
         }, 2000);
+      });
+    }
+
+    function exportToPDF(idx, e) {
+      const session = sessions.find(s => s.id === activeSessionId);
+      if (!session || !session.messages[idx]) return;
+
+      const btn = e.currentTarget;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Exporting...</span>`;
+      lucide.createIcons();
+
+      const messageContent = session.messages[idx].text;
+      const htmlContent = marked.parse(messageContent);
+
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div style="padding: 40px; font-family: sans-serif; color: #111;">
+          <h1 style="color: #2563eb; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">IntelliChat AI Export</h1>
+          <p style="font-size: 12px; color: #666; margin-bottom: 30px;">Generated on ${new Date().toLocaleString()}</p>
+          <div style="line-height: 1.6;">${htmlContent}</div>
+          <p style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 10px; font-size: 10px; color: #999; text-align: center;">IntelliChat v3.0 - AI Categorization Engine</p>
+        </div>
+      `;
+
+      const opt = {
+        margin: 1,
+        filename: `IntelliChat_Export_${Date.now()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(container).save().then(() => {
+        btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i><span class="text-emerald-500">Done</span>`;
+        lucide.createIcons();
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          lucide.createIcons();
+        }, 3000);
       });
     }
 
