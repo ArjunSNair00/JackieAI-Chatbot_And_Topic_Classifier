@@ -1,462 +1,712 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-  <title>Topic Classifier AI</title>
-  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Gochi+Hand&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #050505;
-      color: #E5E5E5;
-    }
-    
-    .funny-font {
-      font-family: 'Gochi Hand', cursive;
-    }
-    
-    h1, h2, h3, .mass-font {
-      font-family: 'Bangers', system-ui;
-      letter-spacing: 0.05em;
-    }
-    
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2D2D2D;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #3D3D3D;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <title>Topic Classifier AI</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bangers&family=Gochi+Hand&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: #050505;
+        color: #e5e5e5;
+      }
 
-    .glass {
-      background: rgba(23, 23, 23, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
+      .funny-font {
+        font-family: "Gochi Hand", cursive;
+      }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+      h1,
+      h2,
+      h3,
+      .mass-font {
+        font-family: "Bangers", system-ui;
+        letter-spacing: 0.05em;
+      }
 
-    .animate-fadeIn {
-      animation: fadeIn 0.4s ease-out forwards;
-    }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2d2d2d;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3d3d3d;
+      }
 
-    .sidebar-gradient {
-      background: linear-gradient(180deg, #171717 0%, #0D0D0D 100%);
-    }
+      .glass {
+        background: rgba(23, 23, 23, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
 
-    .msg-user { border-radius: 1.5rem 1.5rem 0.2rem 1.5rem; }
-    .msg-bot { border-radius: 1.5rem 1.5rem 1.5rem 0.2rem; }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    /* Drag Overlay */
-    #global-drag-overlay {
-      background: rgba(59, 130, 246, 0.1);
-      border: 4px dashed rgba(59, 130, 246, 0.4);
-      z-index: 100;
-      backdrop-filter: blur(4px);
-      pointer-events: none;
-      display: none;
-    }
-    #global-drag-overlay.active {
-      display: flex;
-      pointer-events: all;
-    }
+      .animate-fadeIn {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
 
-    /* Wavy Animation */
-    @keyframes wavy {
-      0%, 40%, 100% { transform: translateY(0); }
-      20% { transform: translateY(-6px); }
-    }
-    .thinking-wavy {
-      display: flex;
-      gap: 1px;
-    }
-    .thinking-wavy span {
-      display: inline-block;
-      animation: wavy 1.4s ease-in-out infinite;
-    }
-    /* Dynamic Delays for the sine-like wave */
-    .thinking-wavy span:nth-child(1) { animation-delay: 0.1s; }
-    .thinking-wavy span:nth-child(2) { animation-delay: 0.2s; }
-    .thinking-wavy span:nth-child(3) { animation-delay: 0.3s; }
-    .thinking-wavy span:nth-child(4) { animation-delay: 0.4s; }
-    .thinking-wavy span:nth-child(5) { animation-delay: 0.5s; }
-    .thinking-wavy span:nth-child(6) { animation-delay: 0.6s; }
-    .thinking-wavy span:nth-child(7) { animation-delay: 0.7s; }
-    .thinking-wavy span:nth-child(8) { animation-delay: 0.8s; }
-    .thinking-wavy span:nth-child(9) { animation-delay: 0.9s; }
-    .thinking-wavy span:nth-child(10) { animation-delay: 1.0s; }
-    .thinking-wavy span:nth-child(11) { animation-delay: 1.1s; }
-    .thinking-wavy span:nth-child(12) { animation-delay: 1.2s; }
-    .thinking-wavy span:nth-child(13) { animation-delay: 1.3s; }
-    .thinking-wavy span:nth-child(14) { animation-delay: 1.4s; }
-    .thinking-wavy span:nth-child(15) { animation-delay: 1.5s; }
-    .thinking-wavy span:nth-child(16) { animation-delay: 1.6s; }
-    .thinking-wavy span:nth-child(17) { animation-delay: 1.7s; }
-    .thinking-wavy span:nth-child(18) { animation-delay: 1.8s; }
-    .thinking-wavy span:nth-child(19) { animation-delay: 1.9s; }
-    .thinking-wavy span:nth-child(20) { animation-delay: 2.0s; }
-    .thinking-wavy span:nth-child(21) { animation-delay: 2.1s; }
-    .thinking-wavy span:nth-child(22) { animation-delay: 2.2s; }
-    .thinking-wavy span:nth-child(23) { animation-delay: 2.3s; }
-    .thinking-wavy span:nth-child(24) { animation-delay: 2.4s; }
-    .thinking-wavy span:nth-child(25) { animation-delay: 2.5s; }
-    .thinking-wavy span:nth-child(26) { animation-delay: 2.6s; }
-    .thinking-wavy span:nth-child(27) { animation-delay: 2.7s; }
-    .thinking-wavy span:nth-child(28) { animation-delay: 2.8s; }
-    .thinking-wavy span:nth-child(29) { animation-delay: 2.9s; }
-    .thinking-wavy span:nth-child(30) { animation-delay: 3.0s; }
-    .thinking-wavy span:nth-child(31) { animation-delay: 3.1s; }
-    .thinking-wavy span:nth-child(32) { animation-delay: 3.2s; }
-    .thinking-wavy span:nth-child(33) { animation-delay: 3.3s; }
-    .thinking-wavy span:nth-child(34) { animation-delay: 3.4s; }
-    .thinking-wavy span:nth-child(35) { animation-delay: 3.5s; }
-    .thinking-wavy span:nth-child(36) { animation-delay: 3.6s; }
-    .thinking-wavy span:nth-child(37) { animation-delay: 3.7s; }
-    .thinking-wavy span:nth-child(38) { animation-delay: 3.8s; }
-    .thinking-wavy span:nth-child(39) { animation-delay: 3.9s; }
-    .thinking-wavy span:nth-child(40) { animation-delay: 4.0s; }
+      .sidebar-gradient {
+        background: linear-gradient(180deg, #171717 0%, #0d0d0d 100%);
+      }
 
-    .dot-flashing {
-      position: relative;
-      background-color: #eab308;
-      color: #eab308;
-      animation: dot-flashing 1s infinite linear alternate;
-      animation-delay: 0.5s;
-    }
-    .dot-flashing::before, .dot-flashing::after {
-      content: "";
-      display: inline-block;
-      position: absolute;
-      top: 0;
-    }
-    .dot-flashing::before {
-      left: -8px;
-      width: 4px;
-      height: 4px;
-      border-radius: 5px;
-      background-color: #eab308;
-      color: #eab308;
-      animation: dot-flashing 1s infinite alternate;
-      animation-delay: 0s;
-    }
-    .dot-flashing::after {
-      left: 8px;
-      width: 4px;
-      height: 4px;
-      border-radius: 5px;
-      background-color: #eab308;
-      color: #eab308;
-      animation: dot-flashing 1s infinite alternate;
-      animation-delay: 1s;
-    }
-    @keyframes dot-flashing {
-      0% { background-color: #eab308; }
-      50%, 100% { background-color: rgba(234, 179, 8, 0.2); }
-    }
+      .msg-user {
+        border-radius: 1.5rem 1.5rem 0.2rem 1.5rem;
+      }
+      .msg-bot {
+        border-radius: 1.5rem 1.5rem 1.5rem 0.2rem;
+      }
 
-    .cartoon-border {
-      border: 3px solid #000 !important;
-      box-shadow: 6px 6px 0px #000;
-    }
+      #global-drag-overlay {
+        background: rgba(59, 130, 246, 0.1);
+        border: 4px dashed rgba(59, 130, 246, 0.4);
+        z-index: 100;
+        backdrop-filter: blur(4px);
+        pointer-events: none;
+        display: none;
+      }
+      #global-drag-overlay.active {
+        display: flex;
+        pointer-events: all;
+      }
 
-    button, .msg-user, .msg-bot, #drop-zone, aside, header, .rounded-xl, .rounded-2xl, .rounded-3xl {
-      border: 3px solid #000 !important;
-    }
+      @keyframes wavy {
+        0%,
+        40%,
+        100% {
+          transform: translateY(0);
+        }
+        20% {
+          transform: translateY(-6px);
+        }
+      }
+      .thinking-wavy {
+        display: flex;
+        gap: 1px;
+      }
+      .thinking-wavy span {
+        display: inline-block;
+        animation: wavy 1.4s ease-in-out infinite;
+      }
+      .thinking-wavy span:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .thinking-wavy span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .thinking-wavy span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .thinking-wavy span:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .thinking-wavy span:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+      .thinking-wavy span:nth-child(6) {
+        animation-delay: 0.6s;
+      }
+      .thinking-wavy span:nth-child(7) {
+        animation-delay: 0.7s;
+      }
+      .thinking-wavy span:nth-child(8) {
+        animation-delay: 0.8s;
+      }
+      .thinking-wavy span:nth-child(9) {
+        animation-delay: 0.9s;
+      }
+      .thinking-wavy span:nth-child(10) {
+        animation-delay: 1s;
+      }
 
-    .msg-user { 
-      border-radius: 1.5rem 1.5rem 0.2rem 1.5rem; 
-      box-shadow: -4px 4px 0px #000;
-    }
-    .msg-bot { 
-      border-radius: 1.5rem 1.5rem 1.5rem 0.2rem; 
-      box-shadow: 4px 4px 0px #000;
-    }
+      .dot-flashing {
+        position: relative;
+        background-color: #eab308;
+        color: #eab308;
+        animation: dot-flashing 1s infinite linear alternate;
+        animation-delay: 0.5s;
+      }
+      .dot-flashing::before,
+      .dot-flashing::after {
+        content: "";
+        display: inline-block;
+        position: absolute;
+        top: 0;
+      }
+      .dot-flashing::before {
+        left: -8px;
+        width: 4px;
+        height: 4px;
+        border-radius: 5px;
+        background-color: #eab308;
+        color: #eab308;
+        animation: dot-flashing 1s infinite alternate;
+        animation-delay: 0s;
+      }
+      .dot-flashing::after {
+        left: 8px;
+        width: 4px;
+        height: 4px;
+        border-radius: 5px;
+        background-color: #eab308;
+        color: #eab308;
+        animation: dot-flashing 1s infinite alternate;
+        animation-delay: 1s;
+      }
+      @keyframes dot-flashing {
+        0% {
+          background-color: #eab308;
+        }
+        50%,
+        100% {
+          background-color: rgba(234, 179, 8, 0.2);
+        }
+      }
 
-    #drop-zone {
-      box-shadow: 0px 8px 0px #000;
-    }
+      .cartoon-border {
+        border: 3px solid #000 !important;
+        box-shadow: 6px 6px 0px #000;
+      }
 
-    button:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0px #000;
-    }
-  </style>
-</head>
-<body class="h-screen flex overflow-hidden">
-  
-  <!-- Global Drag Overlay -->
-  <div id="global-drag-overlay" class="fixed inset-0 flex flex-col items-center justify-center animate-fadeIn">
-    <div class="w-32 h-32 rounded-3xl bg-yellow-500 flex items-center justify-center shadow-2xl mb-6">
-      <i data-lucide="sunglasses" class="w-16 h-16 text-black"></i>
-    </div>
-    <h2 class="text-3xl font-bold text-white tracking-tight mass-font">Nee Dubai Kandittundo?</h2>
-    <p class="text-yellow-400 font-semibold mt-2">Drop the PDF, Jackie is waiting.</p>
-  </div>
-  
-  <!-- Sidebar -->
-  <aside id="sidebar" class="w-[280px] h-full sidebar-gradient border-r border-black flex flex-col transition-all duration-300 transform md:translate-x-0 -translate-x-full fixed md:relative z-50 cartoon-border">
-    <div class="p-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-500/20">
-          <i data-lucide="wrench" class="w-5 h-5 text-black"></i>
-        </div>
-        <span class="font-bold text-lg mass-font text-white tracking-widest">Jackie <span class="text-yellow-500 mx-1">-</span> AI</span>
+      button,
+      .msg-user,
+      .msg-bot,
+      #drop-zone,
+      aside,
+      header,
+      .rounded-xl,
+      .rounded-2xl,
+      .rounded-3xl {
+        border: 3px solid #000 !important;
+      }
+
+      .msg-user {
+        border-radius: 1.5rem 1.5rem 0.2rem 1.5rem;
+        box-shadow: -4px 4px 0px #000;
+      }
+      .msg-bot {
+        border-radius: 1.5rem 1.5rem 1.5rem 0.2rem;
+        box-shadow: 4px 4px 0px #000;
+      }
+
+      #drop-zone {
+        box-shadow: 0px 8px 0px #000;
+      }
+
+      button:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0px #000;
+      }
+
+      /* PDF context banner */
+      .pdf-context-banner {
+        background: linear-gradient(
+          135deg,
+          rgba(234, 179, 8, 0.15),
+          rgba(234, 179, 8, 0.05)
+        );
+        border: 2px solid rgba(234, 179, 8, 0.4) !important;
+        box-shadow: 3px 3px 0px #000;
+        border-radius: 0.75rem;
+      }
+    </style>
+  </head>
+  <body class="h-screen flex overflow-hidden">
+    <!-- Global Drag Overlay -->
+    <div
+      id="global-drag-overlay"
+      class="fixed inset-0 flex flex-col items-center justify-center animate-fadeIn"
+    >
+      <div
+        class="w-32 h-32 rounded-3xl bg-yellow-500 flex items-center justify-center shadow-2xl mb-6"
+      >
+        <i data-lucide="sunglasses" class="w-16 h-16 text-black"></i>
       </div>
-      <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-white/5 rounded-lg">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
+      <h2 class="text-3xl font-bold text-white tracking-tight mass-font">
+        Nee Dubai Kandittundo?
+      </h2>
+      <p class="text-yellow-400 font-semibold mt-2">
+        Drop the PDF, Jackie is waiting.
+      </p>
     </div>
 
-    <div class="px-4 py-2">
-      <button onclick="createNewChat()" class="flex items-center gap-3 w-full p-3 rounded-xl bg-white/5 hover:bg-yellow-500/20 border border-white/10 transition-all duration-200 text-sm font-semibold group mass-font">
-        <i data-lucide="plus" class="w-4 h-4 text-yellow-500 group-hover:scale-110 transition-transform"></i>
-        New Quotation
-      </button>
-    </div>
-
-    <!-- History -->
-    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-2 mt-2" id="sidebar-history">
-      <!-- Session Items -->
-    </div>
-
-    <!-- Footer -->
-    <div class="p-4 border-t border-black space-y-4">
-      <!-- Jackie Mode Toggle -->
-      <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+    <!-- Sidebar -->
+    <aside
+      id="sidebar"
+      class="w-[280px] h-full sidebar-gradient border-r border-black flex flex-col transition-all duration-300 transform md:translate-x-0 -translate-x-full fixed md:relative z-50 cartoon-border"
+    >
+      <div class="p-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
-          <span class="text-xs font-bold text-white uppercase tracking-wider mass-font">Jackie Mode</span>
-        </div>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="jackie-mode-toggle" class="sr-only peer" checked onchange="toggleJackieMode(this.checked)">
-          <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"></div>
-        </label>
-      </div>
-
-      <div class="flex items-center gap-3 p-2 hover:bg-yellow-500/10 rounded-xl transition-all cursor-pointer group border-2 border-transparent hover:border-black">
-        <div class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black shadow-lg cartoon-border group-hover:rotate-6 transition-transform">
-          <i data-lucide="sunglasses" class="w-6 h-6"></i>
-        </div>
-        <div class="flex-1 overflow-hidden">
-          <p class="text-sm font-bold text-white truncate mass-font tracking-wide">Customer</p>
-          <p class="text-[10px] text-yellow-600 truncate uppercase animate-pulse funny-font italic">Extra charges may apply</p>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Overlay for mobile sidebar -->
-  <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden"></div>
-
-  <!-- Main View -->
-  <main class="flex-1 flex flex-col h-full relative">
-    
-    <!-- Header -->
-    <header class="h-16 flex items-center justify-between px-4 md:px-8 border-b border-black glass sticky top-0 z-30 cartoon-border">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-white/5 rounded-lg">
-          <i data-lucide="menu" class="w-6 h-6"></i>
-        </button>
-        <span class="text-sm font-medium text-gray-400 hidden sm:block" id="current-title">New Analysis</span>
-      </div>
-      
-      <!-- Mode Toggle -->
-      <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 mx-2 shadow-inner">
-        <button id="mode-classifier-btn" onclick="setMode('classifier')" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition-all">Underworld Scanner</button>
-        <button id="mode-chatbot-btn" onclick="setMode('chatbot')" class="px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg bg-yellow-600 shadow-md text-white transition-all">Jackie-AI</button>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <div class="px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center gap-2">
-          <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-          <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mass-font">Jackie Jeevanode Ondeda Makkale!</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Chat Canvas -->
-    <div id="chat-container" class="flex-1 overflow-y-auto w-full">
-      <div class="max-w-4xl mx-auto py-10 px-4 space-y-8 pb-32">
-        <!-- Initial Welcome State -->
-        <div id="empty-state" class="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-fadeIn">
-          <div class="relative">
-            <div class="absolute inset-0 blur-3xl bg-blue-600/20 rounded-full"></div>
-            <div class="relative w-24 h-24 bg-yellow-500 rounded-2xl flex items-center justify-center shadow-2xl cartoon-border rotate-3">
-              <i data-lucide="wrench" class="w-12 h-12 text-black"></i>
-            </div>
+          <div
+            class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-500/20"
+          >
+            <i data-lucide="wrench" class="w-5 h-5 text-black"></i>
           </div>
-          <div class="space-y-3">
-            <h1 id="empty-title" class="text-4xl font-extrabold text-white lg:text-5xl mass-font tracking-widest">Sagar Alias Jackie <span class="text-yellow-500 mx-2">-</span> AI.</h1>
-            <p id="empty-desc" class="text-yellow-400 max-w-lg mx-auto text-lg leading-relaxed italic funny-font">
-              "Money is always an issue!" Ask Jackie anything, from counting gold to ruling the underworld. No sentiments, only mass.
+          <span class="font-bold text-lg mass-font text-white tracking-widest"
+            >Jackie <span class="text-yellow-500 mx-1">-</span> AI</span
+          >
+        </div>
+        <button
+          onclick="toggleSidebar()"
+          class="md:hidden p-2 hover:bg-white/5 rounded-lg"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="px-4 py-2">
+        <button
+          onclick="createNewChat()"
+          class="flex items-center gap-3 w-full p-3 rounded-xl bg-white/5 hover:bg-yellow-500/20 border border-white/10 transition-all duration-200 text-sm font-semibold group mass-font"
+        >
+          <i
+            data-lucide="plus"
+            class="w-4 h-4 text-yellow-500 group-hover:scale-110 transition-transform"
+          ></i>
+          New Quotation
+        </button>
+      </div>
+
+      <div
+        class="flex-1 overflow-y-auto px-4 py-4 space-y-2 mt-2"
+        id="sidebar-history"
+      ></div>
+
+      <div class="p-4 border-t border-black space-y-4">
+        <div
+          class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10"
+        >
+          <div class="flex items-center gap-2">
+            <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
+            <span
+              class="text-xs font-bold text-white uppercase tracking-wider mass-font"
+              >Jackie Mode</span
+            >
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              id="jackie-mode-toggle"
+              class="sr-only peer"
+              checked
+              onchange="toggleJackieMode(this.checked)"
+            />
+            <div
+              class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"
+            ></div>
+          </label>
+        </div>
+
+        <div
+          class="flex items-center gap-3 p-2 hover:bg-yellow-500/10 rounded-xl transition-all cursor-pointer group border-2 border-transparent hover:border-black"
+        >
+          <div
+            class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black shadow-lg cartoon-border group-hover:rotate-6 transition-transform"
+          >
+            <i data-lucide="sunglasses" class="w-6 h-6"></i>
+          </div>
+          <div class="flex-1 overflow-hidden">
+            <p
+              class="text-sm font-bold text-white truncate mass-font tracking-wide"
+            >
+              Customer
+            </p>
+            <p
+              class="text-[10px] text-yellow-600 truncate uppercase animate-pulse funny-font italic"
+            >
+              Extra charges may apply
             </p>
           </div>
-          <div id="empty-hints" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl w-full">
-            <!-- Hints dynamically injected -->
+        </div>
+      </div>
+    </aside>
+
+    <div
+      id="sidebar-overlay"
+      onclick="toggleSidebar()"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden"
+    ></div>
+
+    <!-- Main View -->
+    <main class="flex-1 flex flex-col h-full relative">
+      <header
+        class="h-16 flex items-center justify-between px-4 md:px-8 border-b border-black glass sticky top-0 z-30 cartoon-border"
+      >
+        <div class="flex items-center gap-4">
+          <button
+            onclick="toggleSidebar()"
+            class="md:hidden p-2 hover:bg-white/5 rounded-lg"
+          >
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+          <span
+            class="text-sm font-medium text-gray-400 hidden sm:block"
+            id="current-title"
+            >New Analysis</span
+          >
+        </div>
+
+        <div
+          class="flex bg-black/40 p-1 rounded-xl border border-white/10 mx-2 shadow-inner"
+        >
+          <button
+            id="mode-classifier-btn"
+            onclick="setMode('classifier')"
+            class="px-4 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition-all"
+          >
+            Underworld Scanner
+          </button>
+          <button
+            id="mode-chatbot-btn"
+            onclick="setMode('chatbot')"
+            class="px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg bg-yellow-600 shadow-md text-white transition-all"
+          >
+            Jackie-AI
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div
+            class="px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center gap-2"
+          >
+            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+            <span
+              class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mass-font"
+              >Jackie Jeevanode Ondeda Makkale!</span
+            >
           </div>
         </div>
-        <!-- Messages will be injected here -->
-        <div id="chat" class="space-y-8"></div>
-      </div>
-    </div>
+      </header>
 
-    <!-- Input Footer -->
-    <div class="p-6 md:p-8 pt-0">
-      <div class="max-w-4xl mx-auto">
-        <div id="drop-zone" class="glass border border-white/10 rounded-3xl p-2 shadow-2xl relative group focus-within:border-yellow-500/50 transition-all">
-          <!-- Attachment Preview -->
-          <div id="file-preview" class="hidden px-4 py-2 border-b border-white/5 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-xs text-yellow-400">
-              <i data-lucide="file-text" class="w-4 h-4"></i>
-              <span id="file-name" class="font-semibold truncate max-w-[200px]">document.pdf</span>
+      <!-- Chat Canvas -->
+      <div id="chat-container" class="flex-1 overflow-y-auto w-full">
+        <div class="max-w-4xl mx-auto py-10 px-4 space-y-8 pb-32">
+          <div
+            id="empty-state"
+            class="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-fadeIn"
+          >
+            <div class="relative">
+              <div
+                class="absolute inset-0 blur-3xl bg-blue-600/20 rounded-full"
+              ></div>
+              <div
+                class="relative w-24 h-24 bg-yellow-500 rounded-2xl flex items-center justify-center shadow-2xl cartoon-border rotate-3"
+              >
+                <i data-lucide="wrench" class="w-12 h-12 text-black"></i>
+              </div>
             </div>
-            <button onclick="removeFile()" class="p-1 hover:text-rose-500">
+            <div class="space-y-3">
+              <h1
+                id="empty-title"
+                class="text-4xl font-extrabold text-white lg:text-5xl mass-font tracking-widest"
+              >
+                Sagar Alias Jackie
+                <span class="text-yellow-500 mx-2">-</span> AI.
+              </h1>
+              <p
+                id="empty-desc"
+                class="text-yellow-400 max-w-lg mx-auto text-lg leading-relaxed italic funny-font"
+              >
+                "Money is always an issue!" Ask Jackie anything, from counting
+                gold to ruling the underworld. No sentiments, only mass.
+              </p>
+            </div>
+            <div
+              id="empty-hints"
+              class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl w-full"
+            ></div>
+          </div>
+          <div id="chat" class="space-y-8"></div>
+        </div>
+      </div>
+
+      <!-- Input Footer -->
+      <div class="p-6 md:p-8 pt-0">
+        <div class="max-w-4xl mx-auto">
+          <!-- PDF Context Banner (shown when a PDF is loaded for the session) -->
+          <div
+            id="pdf-context-banner"
+            class="hidden pdf-context-banner px-4 py-2 mb-2 flex items-center justify-between"
+          >
+            <div class="flex items-center gap-2 text-xs text-yellow-400">
+              <i data-lucide="file-check" class="w-4 h-4 text-yellow-500"></i>
+              <span
+                class="font-bold mass-font text-yellow-400 uppercase tracking-wide"
+                >PDF Loaded:</span
+              >
+              <span
+                id="pdf-context-name"
+                class="text-gray-300 truncate max-w-[200px]"
+              ></span>
+              <span class="text-gray-500 italic funny-font text-[10px]"
+                >— Jackie remembers everything</span
+              >
+            </div>
+            <button
+              onclick="clearPDFContext()"
+              class="p-1 hover:text-rose-500 text-gray-500 transition-colors"
+              title="Clear PDF context"
+            >
               <i data-lucide="x" class="w-4 h-4"></i>
             </button>
           </div>
-          
-          <div class="flex items-end">
-            <!-- Attachment Button -->
-            <div class="pb-2 pl-2">
-              <input type="file" id="file-input" class="hidden" accept=".pdf" onchange="handleFile(this.files[0])">
-              <button onclick="document.getElementById('file-input').click()" class="w-10 h-10 hover:bg-white/10 rounded-2xl text-gray-400 hover:text-white flex items-center justify-center transition-all">
-                <i data-lucide="paperclip" class="w-5 h-5"></i>
+
+          <div
+            id="drop-zone"
+            class="glass border border-white/10 rounded-3xl p-2 shadow-2xl relative group focus-within:border-yellow-500/50 transition-all"
+          >
+            <!-- Attachment Preview (shown while selecting, before send) -->
+            <div
+              id="file-preview"
+              class="hidden px-4 py-2 border-b border-white/5 flex items-center justify-between"
+            >
+              <div class="flex items-center gap-2 text-xs text-yellow-400">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span
+                  id="file-name"
+                  class="font-semibold truncate max-w-[200px]"
+                  >document.pdf</span
+                >
+                <span class="text-gray-600 text-[10px] funny-font italic"
+                  >Extracting text...</span
+                >
+              </div>
+              <button onclick="removeFile()" class="p-1 hover:text-rose-500">
+                <i data-lucide="x" class="w-4 h-4"></i>
               </button>
             </div>
-            
-            <textarea
-              id="input"
-              rows="1"
-              class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-yellow-800/50 px-4 py-4 resize-none max-h-60"
-              placeholder="Ask Jackie, money is no issue..."
-            ></textarea>
-            
-            <div class="pb-2 pr-2 flex gap-2">
-              <button id="stop-btn" onclick="stopExecution()" class="hidden w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 rounded-2xl text-rose-500 flex items-center justify-center transition-all">
-                <i data-lucide="square" class="w-5 h-5"></i>
-              </button>
-              <button id="send-btn" onclick="send()" class="w-10 h-10 bg-yellow-600 hover:bg-yellow-50 rounded-2xl text-black hover:text-yellow-600 flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale">
-                <i data-lucide="arrow-up" class="w-6 h-6"></i>
-              </button>
+
+            <div class="flex items-end">
+              <div class="pb-2 pl-2">
+                <input
+                  type="file"
+                  id="file-input"
+                  class="hidden"
+                  accept=".pdf"
+                  onchange="handleFile(this.files[0])"
+                />
+                <button
+                  onclick="document.getElementById('file-input').click()"
+                  class="w-10 h-10 hover:bg-white/10 rounded-2xl text-gray-400 hover:text-white flex items-center justify-center transition-all"
+                >
+                  <i data-lucide="paperclip" class="w-5 h-5"></i>
+                </button>
+              </div>
+
+              <textarea
+                id="input"
+                rows="1"
+                class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-yellow-800/50 px-4 py-4 resize-none max-h-60"
+                placeholder="Ask Jackie, money is no issue..."
+              ></textarea>
+
+              <div class="pb-2 pr-2 flex gap-2">
+                <button
+                  id="stop-btn"
+                  onclick="stopExecution()"
+                  class="hidden w-10 h-10 bg-rose-500/10 hover:bg-rose-500/20 rounded-2xl text-rose-500 flex items-center justify-center transition-all"
+                >
+                  <i data-lucide="square" class="w-5 h-5"></i>
+                </button>
+                <button
+                  id="send-btn"
+                  onclick="send()"
+                  class="w-10 h-10 bg-yellow-600 hover:bg-yellow-50 rounded-2xl text-black hover:text-yellow-600 flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale"
+                >
+                  <i data-lucide="arrow-up" class="w-6 h-6"></i>
+                </button>
+              </div>
             </div>
           </div>
+          <p
+            class="text-center text-[10px] text-yellow-700 mt-4 uppercase tracking-[0.2em] font-semibold mass-font italic funny-font"
+          >
+            Directed by Jackie
+          </p>
         </div>
-        <p class="text-center text-[10px] text-yellow-700 mt-4 uppercase tracking-[0.2em] font-semibold mass-font italic funny-font">Directed by Jackie</p>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <script>
-    lucide.createIcons();
+    <script>
+      lucide.createIcons();
 
-    const chatDiv = document.getElementById("chat");
-    const chatContainer = document.getElementById("chat-container");
-    const sidebarHistoryDiv = document.getElementById("sidebar-history");
-    const inputField = document.getElementById("input");
-    const sendBtn = document.getElementById("send-btn");
-    const stopBtn = document.getElementById("stop-btn");
-    const currentTitleEl = document.getElementById("current-title");
-    const fileInput = document.getElementById("file-input");
-    const filePreview = document.getElementById("file-preview");
-    const fileNameEl = document.getElementById("file-name");
+      const chatDiv = document.getElementById("chat");
+      const chatContainer = document.getElementById("chat-container");
+      const sidebarHistoryDiv = document.getElementById("sidebar-history");
+      const inputField = document.getElementById("input");
+      const sendBtn = document.getElementById("send-btn");
+      const stopBtn = document.getElementById("stop-btn");
+      const currentTitleEl = document.getElementById("current-title");
+      const fileInput = document.getElementById("file-input");
+      const filePreview = document.getElementById("file-preview");
+      const fileNameEl = document.getElementById("file-name");
+      const pdfContextBanner = document.getElementById("pdf-context-banner");
+      const pdfContextName = document.getElementById("pdf-context-name");
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-    let currentMode = null;
-    let classifierSessions = JSON.parse(localStorage.getItem('classifier_sessions')) || [];
-    let chatbotSessions = JSON.parse(localStorage.getItem('chatbot_sessions')) || [];
-    let sessions = [];
-    let activeSessionId = null;
-    let attachedFileText = "";
-    let currentAbortController = null;
-    let isJackieMode = localStorage.getItem('jackie_mode') !== 'false';
-    document.getElementById('jackie-mode-toggle').checked = isJackieMode;
+      let currentMode = null;
+      let classifierSessions =
+        JSON.parse(localStorage.getItem("classifier_sessions")) || [];
+      let chatbotSessions =
+        JSON.parse(localStorage.getItem("chatbot_sessions")) || [];
+      let sessions = [];
+      let activeSessionId = null;
 
-    function toggleJackieMode(enabled) {
-      isJackieMode = enabled;
-      localStorage.setItem('jackie_mode', enabled);
-    }
+      // attachedFileText = PDF being staged (not yet sent)
+      // Once sent, it gets stored in session.pdfContext so ALL future messages in this session include it
+      let attachedFileText = "";
+      let attachedFileName = "";
 
-    // Use relative path exclusively so it relies on the served route.
-    const apiUrl = "/predict";
-    const chatbotApiUrl = "/chat";
+      let currentAbortController = null;
+      let isJackieMode = localStorage.getItem("jackie_mode") !== "false";
+      document.getElementById("jackie-mode-toggle").checked = isJackieMode;
 
-    // Dynamic styles
-    function getConfidenceUI(conf) {
-      if (conf === "N/A" || conf === null) return { text: "N/A", class: "bg-gray-800 text-gray-400" };
-      const percent = Math.round(conf * 100);
-      if (conf >= 0.85) return { text: `${percent}% Match`, class: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" };
-      if (conf >= 0.6) return { text: `${percent}% Possible`, class: "bg-amber-500/10 text-amber-500 border-amber-500/20" };
-      return { text: `${percent}% Low Conf`, class: "bg-rose-500/10 text-rose-500 border-rose-500/20" };
-    }
+      const MAX_PDF_CHARS = 12000; // ~3000 tokens — safe limit to avoid context overflow
 
-    inputField.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-        sendBtn.disabled = !this.value.trim();
-    });
-    
-    inputField.addEventListener('keydown', (e) => {
-        const isMobile = window.innerWidth < 768 || /Mobi|Android/i.test(navigator.userAgent);
-        if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
-            e.preventDefault();
-            send();
-        }
-    });
-
-    function setInput(text) {
-      inputField.value = text;
-      inputField.style.height = 'auto';
-      inputField.style.height = (inputField.scrollHeight) + 'px';
-      sendBtn.disabled = false;
-      inputField.focus();
-    }
-
-    function saveSessions() {
-      if (currentMode === 'classifier') {
-        localStorage.setItem('classifier_sessions', JSON.stringify(classifierSessions));
-      } else {
-        localStorage.setItem('chatbot_sessions', JSON.stringify(chatbotSessions));
+      function toggleJackieMode(enabled) {
+        isJackieMode = enabled;
+        localStorage.setItem("jackie_mode", enabled);
       }
-    }
 
-    function setMode(mode) {
-      if (mode === currentMode) return;
-      currentMode = mode;
-      sessions = mode === 'classifier' ? classifierSessions : chatbotSessions;
-      
-      document.getElementById('mode-classifier-btn').className = `px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${mode === 'classifier' ? 'bg-yellow-600 shadow-md text-white' : 'text-gray-400 hover:text-white'}`;
-      document.getElementById('mode-chatbot-btn').className = `px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${mode === 'chatbot' ? 'bg-yellow-600 shadow-md text-white' : 'text-gray-400 hover:text-white'}`;
-      
-      document.getElementById('empty-title').innerText = mode === 'classifier' ? 'Identify the Underworld.' : 'Jackie  -  AI.';
-      document.getElementById('empty-desc').innerText = mode === 'classifier' 
-        ? 'Paste your deal details. Jackie will tell you if it is Business, Underworld, or Gold deals with 100% mass confidence.' 
-        : '"Money is always an issue!" Ask Jackie anything, from counting gold to ruling the underworld. No sentiments, only mass.';
-      document.getElementById('empty-desc').classList.add('funny-font');
-      
-      inputField.placeholder = mode === 'classifier' ? "Enter Deal details..." : "Ask Jackie, money is no issue...";
-        
-      const hintsContainer = document.getElementById('empty-hints');
-      if (mode === 'classifier') {
-        hintsContainer.innerHTML = `
+      const apiUrl = "/predict";
+      const chatbotApiUrl = "/chat";
+
+      function getConfidenceUI(conf) {
+        if (conf === "N/A" || conf === null)
+          return { text: "N/A", class: "bg-gray-800 text-gray-400" };
+        const percent = Math.round(conf * 100);
+        if (conf >= 0.85)
+          return {
+            text: `${percent}% Match`,
+            class: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+          };
+        if (conf >= 0.6)
+          return {
+            text: `${percent}% Possible`,
+            class: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+          };
+        return {
+          text: `${percent}% Low Conf`,
+          class: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+        };
+      }
+
+      inputField.addEventListener("input", function () {
+        this.style.height = "auto";
+        this.style.height = this.scrollHeight + "px";
+        sendBtn.disabled = !this.value.trim();
+      });
+
+      inputField.addEventListener("keydown", (e) => {
+        const isMobile =
+          window.innerWidth < 768 || /Mobi|Android/i.test(navigator.userAgent);
+        if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+          e.preventDefault();
+          send();
+        }
+      });
+
+      function setInput(text) {
+        inputField.value = text;
+        inputField.style.height = "auto";
+        inputField.style.height = inputField.scrollHeight + "px";
+        sendBtn.disabled = false;
+        inputField.focus();
+      }
+
+      function saveSessions() {
+        if (currentMode === "classifier") {
+          localStorage.setItem(
+            "classifier_sessions",
+            JSON.stringify(classifierSessions),
+          );
+        } else {
+          localStorage.setItem(
+            "chatbot_sessions",
+            JSON.stringify(chatbotSessions),
+          );
+        }
+      }
+
+      function getActiveSession() {
+        return sessions.find((s) => s.id === activeSessionId);
+      }
+
+      // Show/hide the persistent PDF banner based on session context
+      function updatePDFBanner() {
+        const session = getActiveSession();
+        if (session && session.pdfContext && session.pdfContext.text) {
+          pdfContextBanner.classList.remove("hidden");
+          pdfContextName.innerText = session.pdfContext.name || "document.pdf";
+          lucide.createIcons();
+        } else {
+          pdfContextBanner.classList.add("hidden");
+        }
+      }
+
+      function clearPDFContext() {
+        const session = getActiveSession();
+        if (session) {
+          session.pdfContext = null;
+          saveSessions();
+        }
+        updatePDFBanner();
+      }
+
+      function setMode(mode) {
+        if (mode === currentMode) return;
+        currentMode = mode;
+        sessions = mode === "classifier" ? classifierSessions : chatbotSessions;
+
+        document.getElementById("mode-classifier-btn").className =
+          `px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${mode === "classifier" ? "bg-yellow-600 shadow-md text-white" : "text-gray-400 hover:text-white"}`;
+        document.getElementById("mode-chatbot-btn").className =
+          `px-3 md:px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${mode === "chatbot" ? "bg-yellow-600 shadow-md text-white" : "text-gray-400 hover:text-white"}`;
+
+        document.getElementById("empty-title").innerText =
+          mode === "classifier" ? "Identify the Underworld." : "Jackie  -  AI.";
+        document.getElementById("empty-desc").innerText =
+          mode === "classifier"
+            ? "Paste your deal details. Jackie will tell you if it is Business, Underworld, or Gold deals with 100% mass confidence."
+            : '"Money is always an issue!" Ask Jackie anything, from counting gold to ruling the underworld. No sentiments, only mass.';
+        document.getElementById("empty-desc").classList.add("funny-font");
+
+        inputField.placeholder =
+          mode === "classifier"
+            ? "Enter Deal details..."
+            : "Ask Jackie, money is no issue...";
+
+        const hintsContainer = document.getElementById("empty-hints");
+        if (mode === "classifier") {
+          hintsContainer.innerHTML = `
           <button onclick="setInput('Money is always an issue! Analyze the impact of Dubai gold rates on our Kochi underworld economy.')" class="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/50 hover:bg-white/10 transition-all text-left group">
             <p class="text-sm font-semibold text-white group-hover:text-yellow-400 transition-colors mass-font">Underworld Economics</p>
             <p class="text-xs text-gray-500 mt-1">"Gold, Money, and Dubai deals."</p>
@@ -466,8 +716,8 @@
             <p class="text-xs text-gray-500 mt-1">"No sentiments, only mass!"</p>
           </button>
         `;
-      } else {
-        hintsContainer.innerHTML = `
+        } else {
+          hintsContainer.innerHTML = `
           <button onclick="setInput('How many gold biscuits can I carry from Dubai?')" class="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/50 hover:bg-white/10 transition-all text-left group">
             <p class="text-sm font-semibold text-white group-hover:text-yellow-400 transition-colors mass-font">Dubai Deals</p>
             <p class="text-xs text-yellow-700 mt-1">"How many gold biscuits..."</p>
@@ -477,101 +727,128 @@
             <p class="text-xs text-yellow-700 mt-1">"Write an anonymous letter..."</p>
           </button>
         `;
-      }
-      
-      if (sessions.length > 0) loadSession(sessions[0].id);
-      else createNewChat();
-    }
+        }
 
-    function createNewChat() {
-      activeSessionId = Date.now().toString();
-      sessions.unshift({
+        if (sessions.length > 0) loadSession(sessions[0].id);
+        else createNewChat();
+      }
+
+      function createNewChat() {
+        activeSessionId = Date.now().toString();
+        sessions.unshift({
           id: activeSessionId,
           title: "New Analysis",
-          messages: []
-      });
-      saveSessions();
-      renderSidebar();
-      renderChat();
-      if (window.innerWidth < 768) toggleSidebar();
-      inputField.focus();
-    }
+          messages: [],
+          pdfContext: null, // <-- PDF context stored per-session
+        });
+        saveSessions();
+        renderSidebar();
+        renderChat();
+        updatePDFBanner();
+        if (window.innerWidth < 768) toggleSidebar();
+        inputField.focus();
+      }
 
-    function loadSession(id) {
-      activeSessionId = id.toString();
-      renderSidebar();
-      renderChat();
-      if (window.innerWidth < 768) toggleSidebar();
-    }
+      function loadSession(id) {
+        activeSessionId = id.toString();
+        // Ensure legacy sessions have pdfContext field
+        const session = getActiveSession();
+        if (session && session.pdfContext === undefined) {
+          session.pdfContext = null;
+        }
+        renderSidebar();
+        renderChat();
+        updatePDFBanner();
+        if (window.innerWidth < 768) toggleSidebar();
+      }
 
-    function deleteSession(e, id) {
-      e.stopPropagation();
-      sessions = sessions.filter(s => s.id !== id.toString());
-      if (currentMode === 'classifier') classifierSessions = sessions;
-      else chatbotSessions = sessions;
-      saveSessions();
-      if (sessions.length > 0) loadSession(sessions[0].id);
-      else createNewChat();
-    }
+      function deleteSession(e, id) {
+        e.stopPropagation();
+        sessions = sessions.filter((s) => s.id !== id.toString());
+        if (currentMode === "classifier") classifierSessions = sessions;
+        else chatbotSessions = sessions;
+        saveSessions();
+        if (sessions.length > 0) loadSession(sessions[0].id);
+        else createNewChat();
+      }
 
-    function renderSidebar() {
-      sidebarHistoryDiv.innerHTML = sessions.map(session => {
-        const isActive = session.id === activeSessionId;
-        return `
+      function renderSidebar() {
+        sidebarHistoryDiv.innerHTML = sessions
+          .map((session) => {
+            const isActive = session.id === activeSessionId;
+            const hasPDF = session.pdfContext && session.pdfContext.text;
+            return `
           <div onclick="loadSession('${session.id}')" 
-               class="group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${isActive ? 'bg-yellow-600/10 text-yellow-400 border border-yellow-600/20' : 'hover:bg-white/5 text-gray-400 hover:text-gray-200 border border-transparent'}">
-            <i data-lucide="message-square" class="w-4 h-4 flex-shrink-0"></i>
+               class="group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${isActive ? "bg-yellow-600/10 text-yellow-400 border border-yellow-600/20" : "hover:bg-white/5 text-gray-400 hover:text-gray-200 border border-transparent"}">
+            <i data-lucide="${hasPDF ? "file-text" : "message-square"}" class="w-4 h-4 flex-shrink-0 ${hasPDF ? "text-yellow-500" : ""}"></i>
             <span class="truncate text-xs font-semibold flex-1">${session.title}</span>
             <button onclick="deleteSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition-opacity">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         `;
-      }).join('');
-      lucide.createIcons();
-    }
-
-    function renderChat() {
-      const session = sessions.find(s => s.id === activeSessionId);
-      currentTitleEl.innerText = session ? session.title : "Classifier";
-
-      if (!session || session.messages.length === 0) {
-          document.getElementById('empty-state').style.display = 'flex';
-          chatDiv.innerHTML = '';
-          return;
+          })
+          .join("");
+        lucide.createIcons();
       }
-      
-      document.getElementById('empty-state').style.display = 'none';
-      
-      chatDiv.innerHTML = session.messages.map((m, idx) => {
-        const isUser = m.role === "user";
-        if (isUser) {
-          return `
+
+      function renderChat() {
+        const session = getActiveSession();
+        currentTitleEl.innerText = session ? session.title : "Classifier";
+
+        if (!session || session.messages.length === 0) {
+          document.getElementById("empty-state").style.display = "flex";
+          chatDiv.innerHTML = "";
+          return;
+        }
+
+        document.getElementById("empty-state").style.display = "none";
+
+        chatDiv.innerHTML = session.messages
+          .map((m, idx) => {
+            const isUser = m.role === "user";
+            if (isUser) {
+              // Show PDF badge on user message if that message attached a PDF
+              const pdfBadge = m.attachedPDF
+                ? `
+            <div class="flex items-center gap-1 text-[10px] text-yellow-600 mb-2">
+              <i data-lucide="file-text" class="w-3 h-3"></i>
+              <span class="funny-font italic">${m.attachedPDF}</span>
+            </div>
+          `
+                : "";
+              return `
             <div class="flex flex-col items-end gap-2 animate-fadeIn">
               <div class="bg-yellow-600 text-black px-5 py-4 msg-user max-w-[85%] shadow-lg shadow-yellow-500/10">
+                ${pdfBadge}
                 <p class="text-sm leading-relaxed">${m.text}</p>
               </div>
               <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest mr-2 funny-font italic">Client Quotation</span>
             </div>
           `;
-        } else {
-          const ui = getConfidenceUI(m.conf);
-          const isThinking = m.text.includes("...") || m.text === "Analyzing semantic patterns...";
-          
-          let contentHtml = "";
-          if (isThinking) {
-            contentHtml = `
+            } else {
+              const ui = getConfidenceUI(m.conf);
+              const isThinking = m.thinking === true;
+
+              let contentHtml = "";
+              if (isThinking) {
+                contentHtml = `
               <div class="flex flex-col gap-4">
                 <div class="thinking-wavy text-yellow-400 font-bold text-sm tracking-widest funny-font italic">
-                  ${m.text.split('').map(char => char === ' ' ? '&nbsp;' : `<span>${char}</span>`).join('')}
+                  ${m.text
+                    .split("")
+                    .map((char) =>
+                      char === " " ? "&nbsp;" : `<span>${char}</span>`,
+                    )
+                    .join("")}
                 </div>
                 <div class="flex items-center ml-3 mt-1">
                   <div class="dot-flashing"></div>
                 </div>
               </div>
             `;
-          } else if (currentMode === 'classifier') {
-            contentHtml = `
+              } else if (currentMode === "classifier") {
+                contentHtml = `
               <div class="flex items-baseline gap-2 flex-wrap">
                 <span class="text-sm text-gray-400 italic">Underworld Sector:</span>
                 <span class="text-2xl font-bold text-yellow-500 tracking-tight mass-font">${m.text}</span>
@@ -580,15 +857,15 @@
                 ${ui.text}
               </div>
             `;
-          } else {
-            contentHtml = `
+              } else {
+                contentHtml = `
               <div class="prose prose-invert prose-sm max-w-none text-gray-200">
                 ${marked.parse(m.text)}
               </div>
             `;
-          }
+              }
 
-          return `
+              return `
             <div class="flex flex-col items-start gap-3 animate-fadeIn relative group">
               <div class="bg-white/5 border border-white/5 p-6 msg-bot max-w-[90%] md:max-w-[80%] relative group shadow-2xl overflow-hidden w-full">
                 <div class="absolute top-0 left-0 w-1.5 h-full bg-yellow-500"></div>
@@ -596,16 +873,12 @@
                   <div class="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
                     <i data-lucide="hammer" class="w-4 h-4 text-yellow-500"></i>
                   </div>
-                  <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mass-font">${currentMode === 'classifier' ? 'Mass Identification Complete' : 'Jackie - AI Command'}</span>
+                  <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mass-font">${currentMode === "classifier" ? "Mass Identification Complete" : "Jackie - AI Command"}</span>
                 </div>
-                
-                ${!isThinking ? `` : ''}
-
-                <div class="space-y-4">
-                  ${contentHtml}
-                </div>
-
-                ${!isThinking ? `
+                <div class="space-y-4">${contentHtml}</div>
+                ${
+                  !isThinking
+                    ? `
                 <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-end gap-3">
                   <span class="copy-status text-[10px] font-bold text-emerald-500 uppercase tracking-widest opacity-0 transition-opacity">Copied Response</span>
                   <button onclick="copyMessage(${idx}, event)" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider group">
@@ -617,210 +890,263 @@
                     <span>Export PDF</span>
                   </button>
                 </div>
-                ` : ''}
+                `
+                    : ""
+                }
               </div>
               <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest ml-2 funny-font italic">Official Quotation from Jackie</span>
             </div>
           `;
-        }
-      }).join('');
-      
-      lucide.createIcons();
-      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-    }
+            }
+          })
+          .join("");
 
-    async function send() {
-      const val = inputField.value.trim();
-      if (!val) return;
-      
-      const session = sessions.find(s => s.id === activeSessionId);
-      if (!session) return;
-
-      if (session.messages.length === 0) {
-          session.title = val.substring(0, 35) + (val.length > 35 ? '...' : '');
-      }
-
-      session.messages.push({ role: "user", text: val });
-      saveSessions();
-      renderSidebar();
-      renderChat();
-      
-      inputField.value = "";
-      inputField.style.height = 'auto';
-      sendBtn.disabled = true;
-
-      // Add thinking...
-      session.messages.push({ role: "bot", text: currentMode === 'classifier' ? "Jackie is doing a mass entry..." : "Jackie is counting gold in Dubai...", conf: null });
-      renderChat();
-
-      currentAbortController = new AbortController();
-      stopBtn.classList.remove('hidden');
-
-      try {
-        if (currentMode === 'classifier') {
-          const res = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: val }),
-            signal: currentAbortController.signal
-          });
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.detail || errData.error || `Server Error (${res.status})`);
-          }
-
-          const data = await res.json();
-          session.messages.pop(); 
-          session.messages.push({
-            role: "bot",
-            text: data.topic || "Unknown Topic",
-            conf: data.confidence !== undefined ? data.confidence : "N/A",
-          });
-        } else {
-          // Add attachment if any
-          let fullText = val;
-          if (attachedFileText) {
-            fullText = `[Attached Document Content]:\n${attachedFileText}\n\n[User Instruction]:\n${val}`;
-          }
-
-          // Update the session's temporary message to include attachment context for the API
-          const messageForApi = { role: "user", text: fullText };
-
-          const jackiePrompt = `You are Sagar Alias Jackie, the iconic Malayalam movie character. You are a mass underworld don with style, confidence, and a unique way of speaking. Use movie quotes like "Money is always an issue", "Nee Dubai kanditundo?", "Dubai!", "Jackie Machaan!", and have a "mass" attitude. Your tone is funny, sarcastic, and slightly dangerous but helpful. Respond in English with a touch of Kerala underworld vibe. Never break character. Always address the user as a 'Customer'.`;
-          const normalPrompt = `You are a professional, helpful, and concise AI assistant. Provide accurate, serious, and quick responses to the user's queries. Maintain a polite and professional tone at all times.`;
-          
-          const systemPrompt = isJackieMode ? jackiePrompt : normalPrompt;
-          
-          const historyToSend = [
-            { role: 'system', content: systemPrompt },
-            ...session.messages.slice(0, -2).map(m => ({
-              role: m.role === 'user' ? 'user' : 'assistant', 
-              content: m.text
-            })),
-            { role: 'user', content: fullText }
-          ];
-          
-          const res = await fetch(chatbotApiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: historyToSend }),
-            signal: currentAbortController.signal
-          });
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.detail || errData.error || `Server Error (${res.status})`);
-          }
-
-          const data = await res.json();
-          session.messages.pop(); 
-          session.messages.push({
-            role: "bot",
-            text: data.response || "No response received.",
-            conf: null,
-          });
-          removeFile(); // Clear file after sending
-        }
-        
-        saveSessions();
-        renderChat();
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-        session.messages.pop();
-        session.messages.push({ 
-          role: "bot", 
-          text: `⚠️ Analysis Failed: ${err.message}`, 
-          conf: null 
+        lucide.createIcons();
+        chatContainer.scrollTo({
+          top: chatContainer.scrollHeight,
+          behavior: "smooth",
         });
-        saveSessions();
-        renderChat();
-      } finally {
-        currentAbortController = null;
-        stopBtn.classList.add('hidden');
       }
-    }
 
-    function stopExecution() {
-      if (currentAbortController) {
-        currentAbortController.abort();
-        const session = sessions.find(s => s.id === activeSessionId);
-        if (session) {
-          session.messages.pop();
-          session.messages.push({ role: "bot", text: "Process cancelled by user.", conf: null });
+      async function send() {
+        const val = inputField.value.trim();
+        if (!val) return;
+
+        const session = getActiveSession();
+        if (!session) return;
+
+        if (session.messages.length === 0) {
+          session.title = val.substring(0, 35) + (val.length > 35 ? "..." : "");
+        }
+
+        // If a new PDF was just attached (staged), save it into session context NOW
+        if (attachedFileText) {
+          session.pdfContext = {
+            name: attachedFileName,
+            text: attachedFileText.substring(0, MAX_PDF_CHARS), // Trim to safe limit
+          };
+          // Mark this user message as the one that introduced the PDF
+          session.messages.push({
+            role: "user",
+            text: val,
+            attachedPDF: attachedFileName,
+          });
+          // Clear staging area
+          attachedFileText = "";
+          attachedFileName = "";
+          fileInput.value = "";
+          filePreview.classList.add("hidden");
+        } else {
+          session.messages.push({ role: "user", text: val });
+        }
+
+        saveSessions();
+        renderSidebar();
+        renderChat();
+        updatePDFBanner();
+
+        inputField.value = "";
+        inputField.style.height = "auto";
+        sendBtn.disabled = true;
+
+        // Add thinking state
+        const thinkingText =
+          currentMode === "classifier"
+            ? "Jackie is doing a mass entry..."
+            : "Jackie is counting gold in Dubai...";
+        session.messages.push({
+          role: "bot",
+          text: thinkingText,
+          conf: null,
+          thinking: true,
+        });
+        renderChat();
+
+        currentAbortController = new AbortController();
+        stopBtn.classList.remove("hidden");
+
+        try {
+          if (currentMode === "classifier") {
+            const res = await fetch(apiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: val }),
+              signal: currentAbortController.signal,
+            });
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              throw new Error(
+                errData.detail ||
+                  errData.error ||
+                  `Server Error (${res.status})`,
+              );
+            }
+            const data = await res.json();
+            session.messages.pop();
+            session.messages.push({
+              role: "bot",
+              text: data.topic || "Unknown Topic",
+              conf: data.confidence !== undefined ? data.confidence : "N/A",
+            });
+          } else {
+            // ── Build system prompt ──────────────────────────────────────────
+            const jackiePrompt = `You are Sagar Alias Jackie, the iconic Malayalam movie character. You are a mass underworld don with style, confidence, and a unique way of speaking. Use movie quotes like "Money is always an issue", "Nee Dubai kanditundo?", "Dubai!", "Jackie Machaan!", and have a "mass" attitude. Your tone is funny, sarcastic, and slightly dangerous but helpful. Respond in English with a touch of Kerala underworld vibe. Never break character. Always address the user as a 'Customer'.`;
+            const normalPrompt = `You are a professional, helpful, and concise AI assistant. Provide accurate, serious, and quick responses to the user's queries. Maintain a polite and professional tone at all times.`;
+            const systemPrompt = isJackieMode ? jackiePrompt : normalPrompt;
+
+            // ── Build PDF context block (injected once into the system prompt) ──
+            // This ensures the AI always has full PDF context regardless of which message in history is active
+            let pdfSystemBlock = "";
+            if (session.pdfContext && session.pdfContext.text) {
+              pdfSystemBlock = `\n\n---\n[ATTACHED DOCUMENT: "${session.pdfContext.name}"]\nThe user has uploaded a PDF document. Use its content to answer all questions in this conversation. Here is the full extracted text:\n\n${session.pdfContext.text}\n---`;
+            }
+
+            // ── Build conversation history (clean — no raw PDF blobs in messages) ──
+            // We only pass the visible user text, NOT the raw PDF dump,
+            // because the PDF is already in the system prompt above.
+            const historyToSend = [
+              { role: "system", content: systemPrompt + pdfSystemBlock },
+              // All prior turns (excluding current thinking placeholder at end)
+              ...session.messages.slice(0, -1).map((m) => ({
+                role: m.role === "user" ? "user" : "assistant",
+                content: m.text, // clean display text, not raw PDF blob
+              })),
+            ];
+
+            const res = await fetch(chatbotApiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ messages: historyToSend }),
+              signal: currentAbortController.signal,
+            });
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              throw new Error(
+                errData.detail ||
+                  errData.error ||
+                  `Server Error (${res.status})`,
+              );
+            }
+
+            const data = await res.json();
+            session.messages.pop();
+            session.messages.push({
+              role: "bot",
+              text: data.response || "No response received.",
+              conf: null,
+            });
+          }
+
           saveSessions();
           renderChat();
+        } catch (err) {
+          if (err.name === "AbortError") return;
+          session.messages.pop();
+          session.messages.push({
+            role: "bot",
+            text: `⚠️ Analysis Failed: ${err.message}`,
+            conf: null,
+          });
+          saveSessions();
+          renderChat();
+        } finally {
+          currentAbortController = null;
+          stopBtn.classList.add("hidden");
         }
-        stopBtn.classList.add('hidden');
       }
-    }
 
-    async function handleFile(file) {
-      if (!file || file.type !== "application/pdf") return;
-      fileNameEl.innerText = file.name;
-      filePreview.classList.remove('hidden');
-      
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-      let text = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        text += content.items.map(item => item.str).join(" ") + "\n";
+      function stopExecution() {
+        if (currentAbortController) {
+          currentAbortController.abort();
+          const session = getActiveSession();
+          if (session) {
+            session.messages.pop();
+            session.messages.push({
+              role: "bot",
+              text: "Process cancelled by user.",
+              conf: null,
+            });
+            saveSessions();
+            renderChat();
+          }
+          stopBtn.classList.add("hidden");
+        }
       }
-      attachedFileText = text;
-    }
 
-    function removeFile() {
-      attachedFileText = "";
-      fileInput.value = "";
-      filePreview.classList.add('hidden');
-    }
+      async function handleFile(file) {
+        if (!file || file.type !== "application/pdf") return;
 
-    function copyMessage(idx, e) {
-      const session = sessions.find(s => s.id === activeSessionId);
-      if (!session || !session.messages[idx]) return;
-      
-      const text = session.messages[idx].text;
-      navigator.clipboard.writeText(text).then(() => {
+        attachedFileName = file.name;
+        fileNameEl.innerText = file.name;
+        filePreview.classList.remove("hidden");
+
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+          let text = "";
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map((item) => item.str).join(" ") + "\n";
+          }
+          attachedFileText = text;
+          // Update file preview label once extraction is done
+          const hint = filePreview.querySelector(".funny-font");
+          if (hint)
+            hint.innerText = `✓ ${pdf.numPages} page${pdf.numPages > 1 ? "s" : ""} extracted`;
+        } catch (err) {
+          attachedFileText = "";
+          fileNameEl.innerText = "Failed to read PDF";
+        }
+      }
+
+      function removeFile() {
+        attachedFileText = "";
+        attachedFileName = "";
+        fileInput.value = "";
+        filePreview.classList.add("hidden");
+      }
+
+      function copyMessage(idx, e) {
+        const session = getActiveSession();
+        if (!session || !session.messages[idx]) return;
+
+        const text = session.messages[idx].text;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = e.currentTarget;
+          const container = btn.parentElement;
+          const status = container.querySelector(".copy-status");
+          const icon = btn.querySelector("svg");
+          const span = btn.querySelector("span");
+          if (!icon) return;
+          const originalText = span.innerText;
+          icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+          span.innerText = "Copied";
+          status.classList.remove("opacity-0");
+          btn.classList.add("bg-emerald-500/20", "text-emerald-500");
+          setTimeout(() => {
+            span.innerText = originalText;
+            status.classList.add("opacity-0");
+            btn.classList.remove("bg-emerald-500/20", "text-emerald-500");
+            lucide.createIcons();
+          }, 2000);
+        });
+      }
+
+      function exportToPDF(idx, e) {
+        const session = getActiveSession();
+        if (!session || !session.messages[idx]) return;
+
         const btn = e.currentTarget;
-        const container = btn.parentElement;
-        const status = container.querySelector('.copy-status');
-        const icon = btn.querySelector('svg'); // Lucide replaces <i> with <svg>
-        const span = btn.querySelector('span');
-        
-        if (!icon) return;
-        
-        const originalLucide = icon.getAttribute('data-lucide') || 'copy';
-        const originalText = span.innerText;
-        
-        icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>'; // Checkmark
-        span.innerText = "Copied";
-        status.classList.remove('opacity-0');
-        btn.classList.add('bg-emerald-500/20', 'text-emerald-500');
-        
-        setTimeout(() => {
-          icon.setAttribute('data-lucide', originalLucide);
-          span.innerText = originalText;
-          status.classList.add('opacity-0');
-          btn.classList.remove('bg-emerald-500/20', 'text-emerald-500');
-          lucide.createIcons();
-        }, 2000);
-      });
-    }
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Exporting...</span>`;
+        lucide.createIcons();
 
-    function exportToPDF(idx, e) {
-      const session = sessions.find(s => s.id === activeSessionId);
-      if (!session || !session.messages[idx]) return;
+        const messageContent = session.messages[idx].text;
+        const htmlContent = marked.parse(messageContent);
 
-      const btn = e.currentTarget;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Exporting...</span>`;
-      lucide.createIcons();
-
-      const messageContent = session.messages[idx].text;
-      const htmlContent = marked.parse(messageContent);
-
-      const container = document.createElement('div');
-      container.innerHTML = `
+        const container = document.createElement("div");
+        container.innerHTML = `
         <div style="padding: 40px; font-family: sans-serif; color: #111;">
           <h1 style="color: #FACC15; background: #000; padding: 10px; border-bottom: 4px solid #FACC15; padding-bottom: 10px;">JackieAI - Dubai Underworld Export</h1>
           <p style="font-size: 12px; color: #666; margin-bottom: 30px;">"Money is always an issue" - Generated on ${new Date().toLocaleString()}</p>
@@ -829,59 +1155,63 @@
         </div>
       `;
 
-      const opt = {
-        margin: 1,
-        filename: `JackieAI_Export_${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
+        const opt = {
+          margin: 1,
+          filename: `JackieAI_Export_${Date.now()}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        };
 
-      html2pdf().set(opt).from(container).save().then(() => {
-        btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i><span class="text-emerald-500">Done</span>`;
-        lucide.createIcons();
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          lucide.createIcons();
-        }, 3000);
+        html2pdf()
+          .set(opt)
+          .from(container)
+          .save()
+          .then(() => {
+            btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i><span class="text-emerald-500">Done</span>`;
+            lucide.createIcons();
+            setTimeout(() => {
+              btn.innerHTML = originalText;
+              lucide.createIcons();
+            }, 3000);
+          });
+      }
+
+      // Drag and Drop
+      window.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        document.getElementById("global-drag-overlay").classList.add("active");
       });
-    }
+      window.addEventListener("dragleave", (e) => {
+        if (e.relatedTarget === null) {
+          document
+            .getElementById("global-drag-overlay")
+            .classList.remove("active");
+        }
+      });
+      window.addEventListener("drop", (e) => {
+        e.preventDefault();
+        document
+          .getElementById("global-drag-overlay")
+          .classList.remove("active");
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+      });
 
-    // Drag and Drop
-    window.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      document.getElementById('global-drag-overlay').classList.add('active');
-    });
-
-    window.addEventListener('dragleave', (e) => {
-      // Only hide if we actually leave the window
-      if (e.relatedTarget === null) {
-        document.getElementById('global-drag-overlay').classList.remove('active');
+      function toggleSidebar() {
+        const sb = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        if (sb.classList.contains("-translate-x-full")) {
+          sb.classList.remove("-translate-x-full");
+          overlay.classList.remove("hidden");
+        } else {
+          sb.classList.add("-translate-x-full");
+          overlay.classList.add("hidden");
+        }
       }
-    });
 
-    window.addEventListener('drop', (e) => {
-      e.preventDefault();
-      document.getElementById('global-drag-overlay').classList.remove('active');
-      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-    });
-
-    function toggleSidebar() {
-      const sb = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebar-overlay');
-      if (sb.classList.contains('-translate-x-full')) {
-        sb.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-      } else {
-        sb.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-      }
-    }
-
-    // Init
-    setMode('chatbot');
-    
-    sendBtn.disabled = true;
-  </script>
-</body>
+      // Init
+      setMode("chatbot");
+      sendBtn.disabled = true;
+    </script>
+  </body>
 </html>
